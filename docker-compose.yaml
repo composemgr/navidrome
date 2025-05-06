@@ -1,0 +1,43 @@
+name: navidrome
+services:
+  server:
+    image: deluan/navidrome:latest
+    container_name: navidrome
+    hostname: ${BASE_HOST_NAME:-navidrome}
+    restart: always
+    pull_policy: always
+    user: 0:0
+    environment:
+      - ND_ENABLEINSIGHTSCOLLECTOR=true
+      - ND_DEFAULTTHEME=dark
+      - ND_LOGLEVEL=error
+      - ND_SCANSCHEDULE=1h
+      - ND_SESSIONTIMEOUT=8766h
+      - ND_ENABLEMEDIAFILECOVERART=true
+      - ND_ENABLEGRAVATAR=true
+      - ND_SCANNER_ENABLED=true
+      - ND_SCANNER_WATCHERWAIT=120s
+      - ND_ENABLESHARING=true
+      - ND_SHAREURL=${BASE_HOST_NAME:-$HOSTNAME}
+      - ND_LASTFM_LANGUAGE=en
+      - ND_LASTFM_ENABLED=true
+      - ND_LASTFM_APIKEY=${LASTFM_APIKEY:-}
+      - ND_LASTFM_SECRET=${LASTFM_SECRET:-}
+      - ND_LISTENBRAINZ_ENABLED=true
+      - ND_LISTENBRAINZ_BASEURL=https://api.listenbrainz.org/1/
+      - ND_JUKEBOX_ENABLED=false
+      - ND_JUKEBOX_DEFAULT=''
+      - ND_JUKEBOX_ADMINONLY=true
+      - ND_IMAGECACHESIZE=2G
+    ports:
+      - '172.17.0.1:59039:4533'
+    volumes:
+      - '/mnt/Music:/music:ro'
+      - '/var/lib/srv/${USER}/docker/deluan/navidrome/latest/data/navidrome:/data'
+    networks:
+      - navidrome
+
+networks:
+  navidrome:
+    name: navidrome
+    external: false
