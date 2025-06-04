@@ -1,0 +1,53 @@
+# nginx proxy address - http://172.17.0.1:59039
+
+name: navidrome
+x-logging: &default-logging
+  options:
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
+
+services:
+  app:
+    image: deluan/navidrome:latest
+    container_name: navidrome-app
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    restart: always
+    pull_policy: always
+    user: 0:0
+    logging: *default-logging
+    environment:
+      - TZ=${TZ:-America/New_York}
+      - ND_ENABLEINSIGHTSCOLLECTOR=true
+      - ND_DEFAULTTHEME=dark
+      - ND_LOGLEVEL=warn
+      - ND_SCANSCHEDULE=6h
+      - ND_SESSIONTIMEOUT=8766h
+      - ND_ENABLEMEDIAFILECOVERART=true
+      - ND_ENABLEGRAVATAR=true
+      - ND_SCANNER_ENABLED=true
+      - ND_SCANNER_WATCHERWAIT=300s
+      - ND_ENABLESHARING=true
+      - ND_SHAREURL=${BASE_HOST_NAME:-$HOSTNAME}
+      - ND_LASTFM_LANGUAGE=en
+      - ND_LASTFM_ENABLED=true
+      - ND_LASTFM_APIKEY=${LASTFM_API_KEY:-}
+      - ND_LASTFM_SECRET=${LASTFM_API_SECRET:-}
+      - ND_LISTENBRAINZ_ENABLED=true
+      - ND_LISTENBRAINZ_BASEURL=https://api.listenbrainz.org/1/
+      - ND_JUKEBOX_ENABLED=false
+      - ND_JUKEBOX_DEFAULT=''
+      - ND_JUKEBOX_ADMINONLY=true
+      - ND_IMAGECACHESIZE=2G
+    ports:
+      - '172.17.0.1:59039:4533'
+    volumes:
+      - '/mnt/Music:/music:ro'
+      - './rootfs/data/navidrome:/data'
+    networks:
+      - navidrome
+
+networks:
+  navidrome:
+    name: navidrome
+    external: false
