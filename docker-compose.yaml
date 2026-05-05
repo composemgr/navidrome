@@ -42,8 +42,8 @@ services:
     ports:
       - '172.17.0.1:59039:4533'
     volumes:
-      - './rootfs/data/media/music:/music:ro'
-      - './rootfs/data/navidrome:/data'
+      - './volumes/data/media/music:/music:ro'
+      - './volumes/data/navidrome:/data'
     networks:
       - navidrome
 
