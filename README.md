@@ -45,8 +45,8 @@ See `docker-compose.yaml` for complete list of configurable options.
 
 ## 📂 Volumes
 
-- `./rootfs/data/media/music` - Data storage
-- `./rootfs/data/navidrome` - Data storage
+- `./volumes/data/media/music` - Data storage
+- `./volumes/data/navidrome` - Data storage
 
 ## 🔍 Logging
 
