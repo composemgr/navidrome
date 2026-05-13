@@ -18,6 +18,8 @@ services:
     logging: *default-logging
     environment:
       TZ: ${TZ:-America/New_York}
+      CONTAINER_NAME: navidrome-app
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
       ND_ENABLEINSIGHTSCOLLECTOR: true
       ND_DEFAULTTHEME: dark
       ND_LOGLEVEL: warn
@@ -46,8 +48,30 @@ services:
       - './volumes/data/navidrome:/data'
     networks:
       - navidrome
+      - proxy
+      - cloudflare
+    labels:
+      - 'traefik.enable=true'
+      - 'cloudflare.enable=true'
+      - 'traefik.docker.network=proxy'
+      - 'cloudflare.service=http://navidrome-app:4533'
+      - 'cloudflare.hostname=navidrome.${CLOUDFLARE_ZONE_NAME:-}'
+      - 'traefik.http.routers.navidrome-app.entrypoints=http'
+      - 'traefik.http.routers.navidrome-app-secure.tls=true'
+      - 'traefik.http.routers.navidrome-app.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.middlewares.navidrome-app-https-redirect.redirectscheme.scheme=https'
+      - 'traefik.http.routers.navidrome-app.middlewares=navidrome-app-https-redirect'
+      - 'traefik.http.routers.navidrome-app-secure.entrypoints=https'
+      - 'traefik.http.routers.navidrome-app-secure.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.routers.navidrome-app-secure.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.navidrome-app-secure.service=navidrome-app'
+      - 'traefik.http.services.navidrome-app.loadbalancer.server.port=4533'
 
 networks:
   navidrome:
     name: navidrome
     external: false
+  proxy:
+    external: true
+  cloudflare:
+    external: true
