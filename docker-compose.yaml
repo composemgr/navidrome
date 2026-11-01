@@ -1,4 +1,4 @@
-# nginx proxy address - http://172.17.0.1:59039
+# nginx proxy address - http://172.17.0.1:64265
 
 name: navidrome
 x-logging: &default-logging
@@ -11,67 +11,51 @@ services:
   app:
     image: deluan/navidrome:latest
     container_name: navidrome-app
+    domainname: ${BASE_DOMAIN_NAME:-example.com}
     hostname: ${BASE_HOST_NAME:-$HOSTNAME}
     restart: always
     pull_policy: always
-    user: 0:0
     logging: *default-logging
     environment:
       TZ: ${TZ:-America/New_York}
       CONTAINER_NAME: navidrome-app
       HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
-      ND_ENABLEINSIGHTSCOLLECTOR: true
-      ND_DEFAULTTHEME: dark
-      ND_LOGLEVEL: warn
-      ND_SCANSCHEDULE: 6h
-      ND_SESSIONTIMEOUT: 8766h
-      ND_ENABLEMEDIAFILECOVERART: true
-      ND_ENABLEGRAVATAR: true
-      ND_SCANNER_ENABLED: true
-      ND_SCANNER_WATCHERWAIT: 300s
-      ND_ENABLESHARING: true
-      ND_SHAREURL: ${BASE_HOST_NAME:-$HOSTNAME}
-      ND_LASTFM_LANGUAGE: en
-      ND_LASTFM_ENABLED: true
-      ND_LASTFM_APIKEY: ${LASTFM_API_KEY:-}
-      ND_LASTFM_SECRET: ${LASTFM_API_SECRET:-}
-      ND_LISTENBRAINZ_ENABLED: true
-      ND_LISTENBRAINZ_BASEURL: https://api.listenbrainz.org/1/
-      ND_JUKEBOX_ENABLED: false
-      ND_JUKEBOX_DEFAULT: ''
-      ND_JUKEBOX_ADMINONLY: true
-      ND_IMAGECACHESIZE: 2G
+      ND_LOGLEVEL: ${NAVIDROME_LOG_LEVEL:-info}
+      ND_SESSIONTIMEOUT: ${NAVIDROME_SESSION_TIMEOUT:-24h}
+      ND_SCANSCHEDULE: ${NAVIDROME_SCAN_SCHEDULE:-1h}
+      ND_SCANNER_ENABLED: 'true'
+      ND_SCANNER_WATCHERWAIT: ${NAVIDROME_SCANNER_WATCHER_WAIT:-300s}
+      ND_DEFAULTTHEME: ${NAVIDROME_DEFAULT_THEME:-Dark}
+      ND_ENABLESHARING: 'false'
+      ND_ENABLEINSIGHTSCOLLECTOR: 'false'
+      ND_ENABLEGRAVATAR: 'false'
+      ND_ENABLEMEDIAFILECOVERART: 'true'
+      ND_COVERARTPRIORITY: cover.thumb,cover.full
+      ND_COVERARTSOURCE: embedded,external
+      ND_IMAGECACHESIZE: ${NAVIDROME_IMAGE_CACHE_SIZE:-100MB}
+      ND_BASEURL: ''
+      ND_TRANSLATIONFOLDER: /app/i18n
+      ND_PROMETHEUS_ENABLED: 'false'
+      ND_LASTFM_ENABLED: 'false'
+      ND_LISTENBRAINZ_ENABLED: 'false'
+      ND_JUKEBOX_ENABLED: 'false'
+      ND_BACKUP_PATH: ${NAVIDROME_BACKUP_PATH:-/data/backups}
+      ND_BACKUP_COUNT: ${NAVIDROME_BACKUP_COUNT:-1}
+      ND_ENABLE_INSIGHTS: 'false'
     ports:
-      - '172.17.0.1:59039:4533'
+      - '172.17.0.1:64265:4533'
     volumes:
+      - './volumes/config/navidrome:/data:z'
       - './volumes/data/media/music:/music:ro'
-      - './volumes/data/navidrome:/data'
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '-', 'http://localhost:4533/ping']
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
       - navidrome
-      - proxy
-      - cloudflare
-    labels:
-      - 'traefik.enable=true'
-      - 'cloudflare.enable=true'
-      - 'traefik.docker.network=proxy'
-      - 'cloudflare.service=http://navidrome-app:4533'
-      - 'cloudflare.hostname=navidrome.${CLOUDFLARE_ZONE_NAME:-}'
-      - 'traefik.http.routers.navidrome-app.entrypoints=http'
-      - 'traefik.http.routers.navidrome-app-secure.tls=true'
-      - 'traefik.http.routers.navidrome-app.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
-      - 'traefik.http.middlewares.navidrome-app-https-redirect.redirectscheme.scheme=https'
-      - 'traefik.http.routers.navidrome-app.middlewares=navidrome-app-https-redirect'
-      - 'traefik.http.routers.navidrome-app-secure.entrypoints=https'
-      - 'traefik.http.routers.navidrome-app-secure.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
-      - 'traefik.http.routers.navidrome-app-secure.tls.certresolver=cloudflare'
-      - 'traefik.http.routers.navidrome-app-secure.service=navidrome-app'
-      - 'traefik.http.services.navidrome-app.loadbalancer.server.port=4533'
 
 networks:
   navidrome:
     name: navidrome
     external: false
-  proxy:
-    external: true
-  cloudflare:
-    external: true

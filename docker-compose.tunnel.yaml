@@ -1,0 +1,64 @@
+name: navidrome
+x-logging: &default-logging
+  options:
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
+
+services:
+  app:
+    image: deluan/navidrome:latest
+    container_name: navidrome-app
+    domainname: ${BASE_DOMAIN_NAME:-example.com}
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    restart: always
+    pull_policy: always
+    logging: *default-logging
+    environment:
+      TZ: ${TZ:-America/New_York}
+      CONTAINER_NAME: navidrome-app
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
+      ND_LOGLEVEL: ${NAVIDROME_LOG_LEVEL:-info}
+      ND_SESSIONTIMEOUT: ${NAVIDROME_SESSION_TIMEOUT:-24h}
+      ND_SCANSCHEDULE: ${NAVIDROME_SCAN_SCHEDULE:-1h}
+      ND_SCANNER_ENABLED: 'true'
+      ND_SCANNER_WATCHERWAIT: ${NAVIDROME_SCANNER_WATCHER_WAIT:-300s}
+      ND_DEFAULTTHEME: ${NAVIDROME_DEFAULT_THEME:-Dark}
+      ND_ENABLESHARING: 'false'
+      ND_ENABLEINSIGHTSCOLLECTOR: 'false'
+      ND_ENABLEGRAVATAR: 'false'
+      ND_ENABLEMEDIAFILECOVERART: 'true'
+      ND_COVERARTPRIORITY: cover.thumb,cover.full
+      ND_COVERARTSOURCE: embedded,external
+      ND_IMAGECACHESIZE: ${NAVIDROME_IMAGE_CACHE_SIZE:-100MB}
+      ND_BASEURL: ''
+      ND_TRANSLATIONFOLDER: /app/i18n
+      ND_PROMETHEUS_ENABLED: 'false'
+      ND_LASTFM_ENABLED: 'false'
+      ND_LISTENBRAINZ_ENABLED: 'false'
+      ND_JUKEBOX_ENABLED: 'false'
+      ND_BACKUP_PATH: ${NAVIDROME_BACKUP_PATH:-/data/backups}
+      ND_BACKUP_COUNT: ${NAVIDROME_BACKUP_COUNT:-1}
+      ND_ENABLE_INSIGHTS: 'false'
+    volumes:
+      - './volumes/config/navidrome:/data:z'
+      - './volumes/data/media/music:/music:ro'
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '-', 'http://localhost:4533/ping']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      - 'cloudflare.enable=true'
+      - 'cloudflare.service=http://navidrome-app:4533'
+      - 'cloudflare.hostname=${BASE_HOST_NAME:-$HOSTNAME}'
+    networks:
+      - navidrome
+      - cloudflare
+
+networks:
+  navidrome:
+    name: navidrome
+    external: false
+  cloudflare:
+    external: true
